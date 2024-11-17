@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract RockPaperScissors {
+    enum Choice { Rock, Paper, Scissors }
+    enum Result { Win, Lose, Draw }
+
+    struct Game {
+        address player;
+        Choice playerChoice;
+        Choice computerChoice;
+        Result result;
+    }
+
+    Game[] public gameHistory;
+
+    function play(string memory _choice) public {
+        Choice playerChoice = _parseChoice(_choice);
+        Choice computerChoice = _generateComputerChoice();
+        Result gameResult = _determineWinner(playerChoice, computerChoice);
+
+        gameHistory.push(Game({
+            player: msg.sender,
+            playerChoice: playerChoice,
+            computerChoice: computerChoice,
+            result: gameResult
+        }));
+    }
+
+    function getGameHistory() public view returns (Game[] memory) {
+        return gameHistory;
+    }
+
+    // Private helper functions
+    function _parseChoice(string memory _choice) private pure returns (Choice) {
+        if (keccak256(abi.encodePacked(_choice)) == keccak256(abi.encodePacked("rock"))) {
+            return Choice.Rock;
+        } else if (keccak256(abi.encodePacked(_choice)) == keccak256(abi.encodePacked("paper"))) {
+            return Choice.Paper;
+        } else if (keccak256(abi.encodePacked(_choice)) == keccak256(abi.encodePacked("scissors"))) {
+            return Choice.Scissors;
+        } else {
+            revert("Invalid choice! Must be 'rock', 'paper', or 'scissors'.");
+        }
+    }
+
+    function _generateComputerChoice() private view returns (Choice) {
+        uint random = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender))) % 3;
+        return Choice(random);
+    }
+
+    function _determineWinner(Choice player, Choice computer) private pure returns (Result) {
+        if (player == computer) {
+            return Result.Draw;
+        } else if (
+            (player == Choice.Rock && computer == Choice.Scissors) ||
+            (player == Choice.Paper && computer == Choice.Rock) ||
+            (player == Choice.Scissors && computer == Choice.Paper)
+        ) {
+            return Result.Win;
+        } else {
+            return Result.Lose;
+        }
+    }
+}
